@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests
@@ -10,6 +10,9 @@ from db_control import crud, mymodels
 
 # # アプリケーション初期化時にテーブルを作成
 # init_db()
+import os
+import shutil
+from db_control.roboflow_predict import predict_image
 
 
 class Customer(BaseModel):
@@ -89,3 +92,18 @@ def delete_customer(customer_id: str = Query(...)):
 def fetchtest():
     response = requests.get('https://jsonplaceholder.typicode.com/users')
     return response.json()
+
+@app.post("/upload-image/")
+def upload_image(file: UploadFile = File(...)):
+    temp_dir = "temp"
+    os.makedirs(temp_dir, exist_ok=True)
+    file_path = os.path.join(temp_dir, file.filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    try:
+        result = predict_image(file_path)
+        return {"result": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

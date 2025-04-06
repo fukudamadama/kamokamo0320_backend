@@ -5,3 +5,4 @@ __pycache__/
 DigiCertGlobalRootCA.crt.pem
 venv/
 backend_env/
+py312env/
